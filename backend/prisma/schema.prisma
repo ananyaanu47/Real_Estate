@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../database/dev.db"
+}
+
+model Property {
+  id           String              @id @default(cuid())
+  name         String
+  status       String
+  price        String
+  dimension    String?
+  location     String
+  propertyType String
+  description  String?
+  bedrooms     Int?
+  bathrooms    Int?
+  area         String?
+  facing       String?
+  mapsUrl      String?
+  landType     String?
+  siteNo       String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  media        PropertyMedia[]
+  embeddings   PropertyEmbedding[]
+}
+
+model PropertyEmbedding {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  chunkIndex Int      @default(0)
+  chunkText  String
+  embedding  String
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model PropertyMedia {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  fileName   String
+  originalName String
+  mimeType   String
+  mediaType  String
+  filePath   String
+  createdAt  DateTime @default(now())
+}
+
+model Lead {
+  id                 String            @id @default(cuid())
+  name               String?
+  phone              String?
+  source             String?           // WhatsApp, web form, walk-in
+  status             String            @default("new")
+  budget             String?
+  preferredArea      String?
+  propertyType       String?
+  notes              String?
+  lastMessage        String?
+  conversationCount  Int               @default(0)
+  nextFollowUpAt     DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  messages           LeadMessage[]
+  reminders          LeadReminder[]
+}
+
+model LeadMessage {
+  id            String   @id @default(cuid())
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  direction     String   // inbound | outbound | system
+  body          String
+  provider      String?  // whatsapp, website, manual
+  rawPayload    String?
+  createdAt     DateTime @default(now())
+}
+
+model LeadReminder {
+  id            String   @id @default(cuid())
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type          String   // follow_up | proposal | visit | check_in
+  title         String
+  body          String
+  dueAt         DateTime
+  completed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
